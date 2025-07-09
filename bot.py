@@ -3,7 +3,6 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.client.default import DefaultBotProperties
 import sqlite3
 
@@ -41,12 +40,12 @@ async def start(message: types.Message):
         welcome_text = cursor.fetchone()[0]
         await message.answer(welcome_text)
     else:
-        kb = InlineKeyboardBuilder()
-        kb.adjust(1)
-        for channel in MANDATORY_CHANNELS:
-            kb.add(InlineKeyboardButton(text='Rejoindre le canal', url=f'https://t.me/{channel.lstrip("@")}'))
-        kb.add(InlineKeyboardButton(text='✅ Vérifier', callback_data='verify_sub'))
-        await message.answer("🚩 Avant d'accéder au contenu, merci de rejoindre les canaux obligatoires.", reply_markup=kb.as_markup())
+        buttons = [
+            [InlineKeyboardButton(text='Rejoindre le canal', url=f'https://t.me/{channel.lstrip("@")}')] for channel in MANDATORY_CHANNELS
+        ]
+        buttons.append([InlineKeyboardButton(text='✅ Vérifier', callback_data='verify_sub')])
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+        await message.answer("🚩 Avant d'accéder au contenu, merci de rejoindre les canaux obligatoires.", reply_markup=kb)
 
 @dp.callback_query(F.data == 'verify_sub')
 async def verify_sub(callback: types.CallbackQuery):
@@ -61,16 +60,15 @@ async def verify_sub(callback: types.CallbackQuery):
 async def settings(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
         return
-    kb = InlineKeyboardBuilder()
-    kb.adjust(1)
-    kb.add(
-        InlineKeyboardButton(text='➕ Ajouter un contenu', callback_data='add_content'),
-        InlineKeyboardButton(text='📜 Liste des contenus', callback_data='list_contents'),
-        InlineKeyboardButton(text='📊 Statistiques', callback_data='stats'),
-        InlineKeyboardButton(text='📢 Envoyer à tous', callback_data='broadcast'),
-        InlineKeyboardButton(text='✏️ Modifier le message', callback_data='edit_message')
-    )
-    await message.answer('⚙️ Panneau admin : choisis une action.', reply_markup=kb.as_markup())
+    buttons = [
+        [InlineKeyboardButton(text='➕ Ajouter un contenu', callback_data='add_content')],
+        [InlineKeyboardButton(text='📜 Liste des contenus', callback_data='list_contents')],
+        [InlineKeyboardButton(text='📊 Statistiques', callback_data='stats')],
+        [InlineKeyboardButton(text='📢 Envoyer à tous', callback_data='broadcast')],
+        [InlineKeyboardButton(text='✏️ Modifier le message', callback_data='edit_message')]
+    ]
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    await message.answer('⚙️ Panneau admin : choisis une action.', reply_markup=kb)
 
 # Les autres fonctions restent inchangées, assurant le support des photos, statistiques et diffusion automatique.
 
@@ -79,3 +77,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+
