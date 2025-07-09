@@ -17,6 +17,7 @@ cursor = conn.cursor()
 cursor.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)')
 cursor.execute('CREATE TABLE IF NOT EXISTS contents (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT)')
 cursor.execute('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)')
+cursor.execute('CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT)')
 cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('welcome_message', '✅ Bienvenue, tu as maintenant accès aux contenus.'))
 conn.commit()
 
@@ -25,7 +26,10 @@ admin_kb = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('📜 Liste des contenus')],
     [KeyboardButton('📊 Statistiques')],
     [KeyboardButton('📢 Envoyer à tous')],
-    [KeyboardButton('✏️ Modifier le message')]
+    [KeyboardButton('✏️ Modifier le message')],
+    [KeyboardButton('📣 Gérer les canaux obligatoires')],
+    [KeyboardButton('✅ Ajouter des canaux')],
+    [KeyboardButton('💬 Voir le message')]
 ], resize_keyboard=True)
 
 @dp.message(Command('start'))
@@ -66,7 +70,9 @@ async def handle_buttons(message: types.Message):
         users = cursor.fetchone()[0]
         cursor.execute('SELECT COUNT(*) FROM contents')
         contents = cursor.fetchone()[0]
-        await message.answer(f'📊 Statistiques :\n👥 Utilisateurs : {users}\n🗂️ Contenus : {contents}')
+        cursor.execute('SELECT COUNT(*) FROM channels')
+        channels = cursor.fetchone()[0]
+        await message.answer(f'📊 Statistiques :\n👥 Utilisateurs : {users}\n🗂️ Contenus : {contents}\n📣 Canaux obligatoires : {channels}')
     elif text == '📢 Envoyer à tous':
         await message.answer('📢 Envoie le message à diffuser à tous les utilisateurs :')
         @dp.message()
@@ -86,10 +92,28 @@ async def handle_buttons(message: types.Message):
             cursor.execute('UPDATE settings SET value = ? WHERE key = ?', (msg.text, 'welcome_message'))
             conn.commit()
             await msg.answer('✅ Message d\'accueil mis à jour.')
+    elif text == '📣 Gérer les canaux obligatoires':
+        cursor.execute('SELECT id, username FROM channels')
+        rows = cursor.fetchall()
+        if rows:
+            listing = '\n'.join([f"{r[0]}: {r[1]}" for r in rows])
+            await message.answer(f'📣 Canaux obligatoires :\n{listing}')
+        else:
+            await message.answer('Aucun canal obligatoire enregistré.')
+    elif text == '✅ Ajouter des canaux':
+        await message.answer('✏️ Envoie le @username du canal à ajouter comme obligatoire :')
+        @dp.message()
+        async def add_channel(msg: types.Message):
+            cursor.execute('INSERT INTO channels (username) VALUES (?)', (msg.text,))
+            conn.commit()
+            await msg.answer('✅ Canal ajouté comme obligatoire.')
+    elif text == '💬 Voir le message':
+        cursor.execute('SELECT value FROM settings WHERE key = ?', ('welcome_message',))
+        welcome_text = cursor.fetchone()[0]
+        await message.answer(f'💬 Message d\'accueil actuel :\n{welcome_text}')
 
 async def main():
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     asyncio.run(main())
-
