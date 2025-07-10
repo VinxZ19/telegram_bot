@@ -1,5 +1,5 @@
 import asyncio
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -32,22 +32,20 @@ async def start(message: types.Message):
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
     if message.from_user.id in ADMIN_IDS:
-        # Supprimer les boutons permanents pour ne plus les afficher en bas
-        remove_keyboard = types.ReplyKeyboardRemove()
         keyboard = InlineKeyboardMarkup(row_width=1)
-        keyboard.add(
-            InlineKeyboardButton(text='+ Ajouter un contenu', callback_data='add_content'),
-            InlineKeyboardButton(text='📜 Liste des contenus', callback_data='list_contents'),
-            InlineKeyboardButton(text='📊 Statistiques', callback_data='stats'),
-            InlineKeyboardButton(text='📢 Envoyer à tous', callback_data='broadcast'),
-            InlineKeyboardButton(text='✏️ Modifier le message', callback_data='edit_welcome'),
-            InlineKeyboardButton(text='📣 Gérer les canaux obligatoires', callback_data='manage_channels'),
-            InlineKeyboardButton(text='✅ Ajouter des canaux', callback_data='add_channel'),
-            InlineKeyboardButton(text='💬 Voir le message', callback_data='view_message')
-        )
+        buttons = [
+            ('+ Ajouter un contenu', 'add_content'),
+            ('📜 Liste des contenus', 'list_contents'),
+            ('📊 Statistiques', 'stats'),
+            ('📢 Envoyer à tous', 'broadcast'),
+            ('✏️ Modifier le message', 'edit_welcome'),
+            ('📣 Gérer les canaux obligatoires', 'manage_channels'),
+            ('✅ Ajouter des canaux', 'add_channel'),
+            ('💬 Voir le message', 'view_message')
+        ]
+        for text, callback in buttons:
+            keyboard.add(InlineKeyboardButton(text=text, callback_data=callback))
         await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.', reply_markup=keyboard)
-        # Supprime le clavier en bas
-        await message.answer("", reply_markup=remove_keyboard)
 
 @dp.callback_query()
 async def handle_callbacks(callback: types.CallbackQuery):
