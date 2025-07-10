@@ -32,6 +32,8 @@ async def start(message: types.Message):
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
     if message.from_user.id in ADMIN_IDS:
+        # Supprimer les boutons permanents pour ne plus les afficher en bas
+        remove_keyboard = types.ReplyKeyboardRemove()
         keyboard = InlineKeyboardMarkup(row_width=1)
         keyboard.add(
             InlineKeyboardButton(text='+ Ajouter un contenu', callback_data='add_content'),
@@ -44,6 +46,8 @@ async def settings(message: types.Message):
             InlineKeyboardButton(text='💬 Voir le message', callback_data='view_message')
         )
         await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.', reply_markup=keyboard)
+        # Supprime le clavier en bas
+        await message.answer("", reply_markup=remove_keyboard)
 
 @dp.callback_query()
 async def handle_callbacks(callback: types.CallbackQuery):
