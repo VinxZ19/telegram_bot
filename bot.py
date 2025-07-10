@@ -31,25 +31,24 @@ async def start(message: types.Message):
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
     if message.from_user.id in ADMIN_IDS:
-        options = [
-            '+ Ajouter un contenu',
-            '📜 Liste des contenus',
-            '📊 Statistiques',
-            '📢 Envoyer à tous',
-            '✏️ Modifier le message',
-            '📣 Gérer les canaux obligatoires',
-            '✅ Ajouter des canaux',
+        text = (
+            '⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot :\n\n'
+            '+ Ajouter un contenu\n'
+            '📜 Liste des contenus\n'
+            '📊 Statistiques\n'
+            '📢 Envoyer à tous\n'
+            '✏️ Modifier le message\n'
+            '📣 Gérer les canaux obligatoires\n'
+            '✅ Ajouter des canaux\n'
             '💬 Voir le message'
-        ]
-        await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.')
-        for option in options:
-            await message.answer(option)
+        )
+        await message.answer(text)
 
 @dp.message()
 async def handle_buttons(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
         return
-    text = message.text
+    text = message.text.strip()
     if text == '+ Ajouter un contenu':
         await message.answer('✏️ Envoie le texte du contenu à ajouter :')
         @dp.message()
