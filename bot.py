@@ -10,7 +10,7 @@ API_TOKEN = '7686324441:AAEoHLF9dpgaSkgig-fxXcuY-mLrfWBZ3eE'
 ADMIN_IDS = [7858376486]
 
 bot = Bot(API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher()
+dp = Dispatcher(bot)
 
 conn = sqlite3.connect('bot.db')
 cursor = conn.cursor()
@@ -47,7 +47,7 @@ async def settings(message: types.Message):
             keyboard.add(InlineKeyboardButton(text=text, callback_data=callback))
         await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.', reply_markup=keyboard)
 
-@dp.callback_query()
+@dp.callback_query(F.data)
 async def handle_callbacks(callback: types.CallbackQuery):
     data = callback.data
     if callback.from_user.id not in ADMIN_IDS:
