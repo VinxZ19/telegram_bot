@@ -21,6 +21,8 @@ cursor.execute('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value
 cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('welcome_message', '✅ Bienvenue, tu as maintenant accès aux contenus.'))
 conn.commit()
 
+admin_add_content_state = set()
+
 async def is_user_subscribed(user_id):
     for channel in MANDATORY_CHANNELS:
         try:
@@ -46,7 +48,7 @@ async def start(message: types.Message):
         await message.answer("🚩 Avant d'accéder au contenu, merci de rejoindre les canaux obligatoires.", reply_markup=kb)
 
 @dp.callback_query()
-async def verify_sub(callback: types.CallbackQuery):
+async def handle_callback(callback: types.CallbackQuery):
     data = callback.data
     if not data:
         await callback.answer()
@@ -59,6 +61,7 @@ async def verify_sub(callback: types.CallbackQuery):
         else:
             await callback.answer('❌ Tu dois rejoindre tous les canaux obligatoires avant de continuer.', show_alert=True)
     elif data == 'add_content':
+        admin_add_content_state.add(callback.from_user.id)
         await callback.message.answer('✏️ Envoie le texte du contenu à ajouter :')
     elif data == 'list_contents':
         cursor.execute('SELECT id, text FROM contents')
@@ -78,6 +81,14 @@ async def verify_sub(callback: types.CallbackQuery):
         await callback.message.answer('📢 Envoie le message à diffuser à tous les utilisateurs :')
     elif data == 'edit_message':
         await callback.message.answer('✏️ Envoie le nouveau message d\'accueil souhaité :')
+
+@dp.message()
+async def save_content(message: types.Message):
+    if message.from_user.id in admin_add_content_state and message.text:
+        cursor.execute('INSERT INTO contents (text) VALUES (?)', (message.text,))
+        conn.commit()
+        admin_add_content_state.remove(message.from_user.id)
+        await message.answer('✅ Contenu sauvegardé avec succès.')
 
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
