@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import sqlite3
 
 API_TOKEN = '7686324441:AAEoHLF9dpgaSkgig-fxXcuY-mLrfWBZ3eE'
@@ -31,85 +32,62 @@ async def start(message: types.Message):
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
     if message.from_user.id in ADMIN_IDS:
-        text = (
-            '⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot :\n\n'
-            '+ Ajouter un contenu\n'
-            '📜 Liste des contenus\n'
-            '📊 Statistiques\n'
-            '📢 Envoyer à tous\n'
-            '✏️ Modifier le message\n'
-            '📣 Gérer les canaux obligatoires\n'
-            '✅ Ajouter des canaux\n'
-            '💬 Voir le message'
+        keyboard = InlineKeyboardMarkup(row_width=1)
+        keyboard.add(
+            InlineKeyboardButton(text='+ Ajouter un contenu', callback_data='add_content'),
+            InlineKeyboardButton(text='📜 Liste des contenus', callback_data='list_contents'),
+            InlineKeyboardButton(text='📊 Statistiques', callback_data='stats'),
+            InlineKeyboardButton(text='📢 Envoyer à tous', callback_data='broadcast'),
+            InlineKeyboardButton(text='✏️ Modifier le message', callback_data='edit_welcome'),
+            InlineKeyboardButton(text='📣 Gérer les canaux obligatoires', callback_data='manage_channels'),
+            InlineKeyboardButton(text='✅ Ajouter des canaux', callback_data='add_channel'),
+            InlineKeyboardButton(text='💬 Voir le message', callback_data='view_message')
         )
-        await message.answer(text)
+        await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.', reply_markup=keyboard)
 
-@dp.message()
-async def handle_buttons(message: types.Message):
-    if message.from_user.id not in ADMIN_IDS:
+@dp.callback_query()
+async def handle_callbacks(callback: types.CallbackQuery):
+    data = callback.data
+    if callback.from_user.id not in ADMIN_IDS:
+        await callback.answer('🚫 Non autorisé')
         return
-    text = message.text.strip()
-    if text == '+ Ajouter un contenu':
-        await message.answer('✏️ Envoie le texte du contenu à ajouter :')
-        @dp.message()
-        async def add_content(msg: types.Message):
-            cursor.execute('INSERT INTO contents (text) VALUES (?)', (msg.text,))
-            conn.commit()
-            await msg.answer('✅ Contenu ajouté avec succès.')
-    elif text == '📜 Liste des contenus':
+    if data == 'add_content':
+        await callback.message.answer('✏️ Envoie le texte du contenu à ajouter :')
+    elif data == 'list_contents':
         cursor.execute('SELECT id, text FROM contents')
         rows = cursor.fetchall()
         if rows:
             listing = '\n'.join([f"{r[0]}: {r[1][:50]}..." for r in rows])
-            await message.answer(listing)
+            await callback.message.answer(listing)
         else:
-            await message.answer('Aucun contenu enregistré.')
-    elif text == '📊 Statistiques':
+            await callback.message.answer('Aucun contenu enregistré.')
+    elif data == 'stats':
         cursor.execute('SELECT COUNT(*) FROM users')
         users = cursor.fetchone()[0]
         cursor.execute('SELECT COUNT(*) FROM contents')
         contents = cursor.fetchone()[0]
         cursor.execute('SELECT COUNT(*) FROM channels')
         channels = cursor.fetchone()[0]
-        await message.answer(f'📊 Statistiques :\n👥 Utilisateurs : {users}\n🗂️ Contenus : {contents}\n📣 Canaux obligatoires : {channels}')
-    elif text == '📢 Envoyer à tous':
-        await message.answer('📢 Envoie le message à diffuser à tous les utilisateurs :')
-        @dp.message()
-        async def broadcast(msg: types.Message):
-            cursor.execute('SELECT user_id FROM users')
-            users = cursor.fetchall()
-            for user in users:
-                try:
-                    await bot.send_message(user[0], msg.text)
-                except:
-                    continue
-            await msg.answer('✅ Message envoyé à tous.')
-    elif text == '✏️ Modifier le message':
-        await message.answer('✏️ Envoie le nouveau message d\'accueil souhaité :')
-        @dp.message()
-        async def update_welcome(msg: types.Message):
-            cursor.execute('UPDATE settings SET value = ? WHERE key = ?', (msg.text, 'welcome_message'))
-            conn.commit()
-            await msg.answer('✅ Message d\'accueil mis à jour.')
-    elif text == '📣 Gérer les canaux obligatoires':
+        await callback.message.answer(f'📊 Statistiques :\n👥 Utilisateurs : {users}\n🗂️ Contenus : {contents}\n📣 Canaux obligatoires : {channels}')
+    elif data == 'broadcast':
+        await callback.message.answer('📢 Envoie le message à diffuser à tous les utilisateurs :')
+    elif data == 'edit_welcome':
+        await callback.message.answer('✏️ Envoie le nouveau message d\'accueil souhaité :')
+    elif data == 'manage_channels':
         cursor.execute('SELECT id, username FROM channels')
         rows = cursor.fetchall()
         if rows:
             listing = '\n'.join([f"{r[0]}: {r[1]}" for r in rows])
-            await message.answer(f'📣 Canaux obligatoires :\n{listing}')
+            await callback.message.answer(f'📣 Canaux obligatoires :\n{listing}')
         else:
-            await message.answer('Aucun canal obligatoire enregistré.')
-    elif text == '✅ Ajouter des canaux':
-        await message.answer('✏️ Envoie le @username du canal à ajouter comme obligatoire :')
-        @dp.message()
-        async def add_channel(msg: types.Message):
-            cursor.execute('INSERT INTO channels (username) VALUES (?)', (msg.text,))
-            conn.commit()
-            await msg.answer('✅ Canal ajouté comme obligatoire.')
-    elif text == '💬 Voir le message':
+            await callback.message.answer('Aucun canal obligatoire enregistré.')
+    elif data == 'add_channel':
+        await callback.message.answer('✏️ Envoie le @username du canal à ajouter comme obligatoire :')
+    elif data == 'view_message':
         cursor.execute('SELECT value FROM settings WHERE key = ?', ('welcome_message',))
         welcome_text = cursor.fetchone()[0]
-        await message.answer(f'💬 Message d\'accueil actuel :\n{welcome_text}')
+        await callback.message.answer(f'💬 Message d\'accueil actuel :\n{welcome_text}')
+    await callback.answer()
 
 async def main():
     await dp.start_polling(bot)
