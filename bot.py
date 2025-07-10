@@ -1,6 +1,5 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -21,17 +20,6 @@ cursor.execute('CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY AUTO
 cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('welcome_message', '✅ Bienvenue, tu as maintenant accès aux contenus.'))
 conn.commit()
 
-admin_kb = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='+ Ajouter un contenu')],
-    [KeyboardButton(text='📜 Liste des contenus')],
-    [KeyboardButton(text='📊 Statistiques')],
-    [KeyboardButton(text='📢 Envoyer à tous')],
-    [KeyboardButton(text='✏️ Modifier le message')],
-    [KeyboardButton(text='📣 Gérer les canaux obligatoires')],
-    [KeyboardButton(text='✅ Ajouter des canaux')],
-    [KeyboardButton(text='💬 Voir le message')]
-], resize_keyboard=True)
-
 @dp.message(Command('start'))
 async def start(message: types.Message):
     cursor.execute('INSERT OR IGNORE INTO users (user_id) VALUES (?)', (message.from_user.id,))
@@ -43,7 +31,19 @@ async def start(message: types.Message):
 @dp.message(Command('settings'))
 async def settings(message: types.Message):
     if message.from_user.id in ADMIN_IDS:
-        await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.', reply_markup=admin_kb)
+        options = [
+            '+ Ajouter un contenu',
+            '📜 Liste des contenus',
+            '📊 Statistiques',
+            '📢 Envoyer à tous',
+            '✏️ Modifier le message',
+            '📣 Gérer les canaux obligatoires',
+            '✅ Ajouter des canaux',
+            '💬 Voir le message'
+        ]
+        await message.answer('⚙️ PANNEAU DU BOT\nDepuis ce menu, vous pouvez gérer le bot.')
+        for option in options:
+            await message.answer(option)
 
 @dp.message()
 async def handle_buttons(message: types.Message):
