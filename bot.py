@@ -11,7 +11,7 @@ ADMIN_IDS = [7858376486]
 MANDATORY_CHANNELS = []
 
 bot = Bot(API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 conn = sqlite3.connect('bot.db')
 cursor = conn.cursor()
