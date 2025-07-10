@@ -1,5 +1,5 @@
 import asyncio
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
@@ -22,14 +22,14 @@ cursor.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', ('we
 conn.commit()
 
 admin_kb = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton('➕ Ajouter un contenu')],
-    [KeyboardButton('📜 Liste des contenus')],
-    [KeyboardButton('📊 Statistiques')],
-    [KeyboardButton('📢 Envoyer à tous')],
-    [KeyboardButton('✏️ Modifier le message')],
-    [KeyboardButton('📣 Gérer les canaux obligatoires')],
-    [KeyboardButton('✅ Ajouter des canaux')],
-    [KeyboardButton('💬 Voir le message')]
+    [KeyboardButton(text='+ Ajouter un contenu')],
+    [KeyboardButton(text='📜 Liste des contenus')],
+    [KeyboardButton(text='📊 Statistiques')],
+    [KeyboardButton(text='📢 Envoyer à tous')],
+    [KeyboardButton(text='✏️ Modifier le message')],
+    [KeyboardButton(text='📣 Gérer les canaux obligatoires')],
+    [KeyboardButton(text='✅ Ajouter des canaux')],
+    [KeyboardButton(text='💬 Voir le message')]
 ], resize_keyboard=True)
 
 @dp.message(Command('start'))
@@ -50,7 +50,7 @@ async def handle_buttons(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
         return
     text = message.text
-    if text == '➕ Ajouter un contenu':
+    if text == '+ Ajouter un contenu':
         await message.answer('✏️ Envoie le texte du contenu à ajouter :')
         @dp.message()
         async def add_content(msg: types.Message):
