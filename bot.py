@@ -84,7 +84,7 @@ async def verify_sub(callback: types.CallbackQuery):
 async def settings(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
         return
-    kb = InlineKeyboardMarkup(row_width=1)
+    kb = InlineKeyboardMarkup()
     kb.add(
         InlineKeyboardButton(text='➕ Ajouter un contenu', callback_data='add_content'),
         InlineKeyboardButton(text='📜 Liste des contenus', callback_data='list_contents'),
